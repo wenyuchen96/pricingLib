@@ -23,7 +23,8 @@ struct ZCBOptionPrice
 class HullWhiteTree
 {
 public:
-    // cumulative density function of a standard normal distribution
+    // helper functions
+    //  cumulative density function of a standard normal distribution
     static double NormalCdf(double x)
     {
         boost::math::normal dist(0.0, 1.0);
@@ -55,6 +56,8 @@ public:
         throw std::runtime_error("Interpolation failed.");
     }
 
+    HullWhiteTree(double sigma, double a, int numTimeSteps, const std::vector<double> &treeTimes) : sigma_{sigma}, a_{a}, numTimesSteps_{numTimeSteps}, treeTimes_{treeTimes}, treeBuilt_{false} {}
+
     // option on a zero coupon bond
     ZCBOptionPrice optionOnZCB(double tExp, double tMat, double strike, double faceAmount, const std::vector<double> &dfTimes, const std::vector<double> &dfValues) const
     {
@@ -84,10 +87,36 @@ public:
         return ZCBOptionPrice{call, put};
     }
 
+    void buildTrinomialTree(const std::vector<double> &dfTimes, const std::vector<double> &dfValues)
+    {
+        // save market input curves
+        dfTimes_ = dfTimes;
+        dfs_ = dfValues;
+
+        // extend tree maturity slightly beyond given tree maturity
+        double treeMaturity{treeTimes_.back() * (numTimesSteps_ + 1.0) / numTimesSteps_};
+        treeTimes_.resize(numTimesSteps_ + 2);
+
+        for (int i = 0; i <= numTimesSteps_ + 1; ++i)
+        {
+            treeTimes_[i] = i * treeMaturity / (numTimesSteps_ + 1.0);
+        }
+        // dfTree is the interpolated discount factors match the treeTimes
+        std::vector<double> dfTree(numTimesSteps_ + 2);
+        dfTree[0] = 1.0;
+        for (int i = 1; i <= numTimesSteps_ + 1; ++i)
+        {
+            dfTree[i] = interpolate(treeTimes_[i], dfTimes, dfValues);
+        }
+
+        //start building tree
+        
+    }
+
 private:
     double sigma_;                      // volatility
     double a_;                          // speed of mean reversion
-    int numTimesSteos_;                 // number of time steps in the tree
+    int numTimesSteps_;                 // number of time steps in the tree, not include t = 0 and at maturity
     EuropeanCalcType EuropeanCalcType_; // calculation type for european option
 
     std::vector<std::vector<double>> Q_; // value matrix including option or bond values
