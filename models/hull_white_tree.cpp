@@ -109,8 +109,92 @@ public:
             dfTree[i] = interpolate(treeTimes_[i], dfTimes, dfValues);
         }
 
-        //start building tree
-        
+        // start building tree
+        const double dt{treeMaturity / (numTimesSteps_ + 1)};
+        dt_ = dt;
+        const double dR{sigma_ * std::sqrt(3.0 * dt)};
+        const int jMax{static_cast<int>(std::ceil(0.1835 / (a_ * dt)))};
+        const int N{jMax};
+
+        Q_.assign(numTimesSteps_ + 2, std::vector<double>(2 * N + 1, 0.0));
+        pu_.assign(2 * N + 1, 0.0);
+        pm_.assign(2 * N + 1, 0.0);
+        pd_.assign(2 * N + 1, 0.0);
+        r_.assign(numTimesSteps_ + 2, std::vector<double>(2 * N + 1, 0.0));
+        r_t_.assign(numTimesSteps_ + 1, 0.0);
+
+        Q_[0][N] = 1.0;
+
+        // fill in the truncated probabilities
+        for (int j = -jMax; j <= jMax; ++j)
+        {
+            const int jN{j + N};
+            double ajdt{a_ * j * dt};
+
+            if (j == jMax)
+            {
+                pu_[jN] = 7.0 / 6.0 + 0.5 * (ajdt * ajdt - 3.0 * ajdt);
+                pm_[jN] = -1.0 / 3.0 - ajdt * ajdt + 2.0 * ajdt;
+                pd_[jN] = 1.0 / 6.0 + 0.5 * (ajdt * ajdt - ajdt);
+            }
+            else if (j == -jMax)
+            {
+                pu_[jN] = 1.0 / 6.0 + 0.5 * (ajdt * ajdt + ajdt);
+                pm_[jN] = -1.0 / 3.0 - ajdt * ajdt - 2.0 * ajdt;
+                pd_[jN] = 7.0 / 6.0 + 0.5 * (ajdt * ajdt + 3.0 * ajdt);
+            }
+            else
+            {
+                pu_[jN] = 1.0 / 6.0 + 0.5 * (ajdt * ajdt - ajdt);
+                pm_[jN] = 2.0 / 3.0 - ajdt * ajdt;
+                pd_[jN] = 1.0 / 6.0 + 0.5 * (ajdt * ajdt + ajdt);
+            }
+        }
+
+        // build tree
+        for (int m = 0; m <= numTimesSteps_; ++m)
+        {
+            int nm = std::min(m, jMax);
+            double sum_qz = 0.0;
+
+            for (int j = -nm; j <= nm; ++j)
+            {
+                int jN = j + N;
+                double rdt = j * dR * dt;
+                sum_qz += Q_[m][jN] * std::exp(-rdt);
+            }
+
+            r_t_[m] = std::log(sum_qz / dfTree[m + 1] / dt);
+
+            for (int j = -nm; j <= nm; ++j)
+            {
+                int jN = j + N;
+                r_[m][jN] = r_t_[m] + j * dR;
+                double rdt = r_[m][jN] * dt;
+                double z = std::exp(-rdt);
+
+                if (j == jMax)
+                {
+                    Q_[m + 1][jN] += Q_[m][jN] * pu_[jN] * z;
+                    Q_[m + 1][jN - 1] += Q_[m][jN] * pm_[jN] * z;
+                    Q_[m + 1][jN - 2] += Q_[m][jN] * pd_[jN] * z;
+                }
+                else if (j == -jMax)
+                {
+                    Q_[m + 1][jN] += Q_[m][jN] * pd_[jN] * z;
+                    Q_[m + 1][jN + 1] += Q_[m][jN] * pm_[jN] * z;
+                    Q_[m + 1][jN + 2] += Q_[m][jN] * pu_[jN] * z;
+                }
+                else
+                {
+                    Q_[m + 1][jN + 1] += Q_[m][jN] * pu_[jN] * z;
+                    Q_[m + 1][jN] += Q_[m][jN] * pm_[jN] * z;
+                    Q_[m + 1][jN - 1] += Q_[m][jN] * pd_[jN] * z;
+                }
+            }
+        }
+
+        treeBuilt_ = true;
     }
 
 private:
@@ -124,9 +208,9 @@ private:
     std::vector<double> treeTimes_;      // time steps
 
     // trinomial trees
-    std::vector<std::vector<double>> pu_; // upward probability
-    std::vector<std::vector<double>> pm_; // middle probability
-    std::vector<std::vector<double>> pd_; // downward probability
+    std::vector<double> pu_; // upward probability
+    std::vector<double> pm_; // middle probability
+    std::vector<double> pd_; // downward probability
 
     // discount curve
     std::vector<double> dfTimes_; // time steps for discount factors inputs
