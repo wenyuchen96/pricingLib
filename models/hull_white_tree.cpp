@@ -58,7 +58,7 @@ public:
 
     HullWhiteTree(double sigma, double a, int numTimeSteps, const std::vector<double> &treeTimes) : sigma_{sigma}, a_{a}, numTimesSteps_{numTimeSteps}, treeTimes_{treeTimes}, treeBuilt_{false} {}
 
-    // option on a zero coupon bond
+    // analytical solution of option on a zero coupon bond
     ZCBOptionPrice optionOnZCB(double tExp, double tMat, double strike, double faceAmount, const std::vector<double> &dfTimes, const std::vector<double> &dfValues) const
     {
         if (tExp > tMat)
