@@ -166,26 +166,3 @@ private:
     double strikePrice_;
     bool isEven_;
 };
-
-int main()
-{
-    // Option and model inputs
-    double s = 10.5;                    // Stock price
-    double k = 5.5;                     // Strike price
-    double t = 2.0;                     // Time to expiry (in years)
-    double r = 0.045;                   // Risk-free rate (continuously compounded)
-    double q = 0.0;                     // Dividend yield
-    double sigma = 0.6;                 // Volatility
-    std::string type = "AMERICAN_CALL"; // Option type for CRR model
-    int steps_per_year = 1000;          // Binomial steps per year
-
-    // Create a CRRTree instance (even vs. odd controlled inside avg function)
-    CRRTree tree(s, r, q, sigma, steps_per_year, t, type, k, true); // isEven doesn't matter here
-
-    // Calculate option value using average of even/odd trees
-    double price = tree.calculateAvgEvenOddTree();
-
-    std::cout << type << " option price (CRR tree avg) is $" << price << "\n";
-
-    return 0;
-}

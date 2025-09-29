@@ -63,19 +63,3 @@ double blm_euro(double s, double k, double t, double r, double sigma, int n, std
     }
     return optionPrice[0][0];
 }
-
-int main()
-{
-
-    // BLM model inputs
-    double s = 10.5;
-    double k = 5.5;
-    double t = 2.0;
-    double r = 0.045;
-    // double q = 0.0;
-    double sigma = 0.6;
-    int n = 500;
-    std::string type = "put";
-
-    std::cout << "The call option value is: " << blm_euro(s, k, t, r, sigma, n, type) << '\n';
-}

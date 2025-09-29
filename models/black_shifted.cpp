@@ -57,28 +57,3 @@ private:
     double sigma_;     // volatility
     std::string type_; // call or put
 };
-
-int main()
-{
-    // Black's shifted model inputs (example for testing)
-    double f = 100.0;                // forward price
-    double s = 0.01;                 // shift (can be zero if unshifted)
-    double k = 95.0;                 // strike
-    double t = 1.0;                  // time to maturity (in years)
-    double df = std::exp(-0.05 * t); // discount factor, e.g., exp(-r * t)
-    double sigma = 0.2;              // volatility
-    std::string type = "call";
-
-    try
-    {
-        BlackShifted model(f, s, k, t, df, sigma, type);
-        double price = model.calculate();
-        std::cout << "Black-shifted " << type << " option price: $" << price << std::endl;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
-
-    return 0;
-}

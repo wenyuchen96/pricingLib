@@ -1,6 +1,8 @@
-#include <iostream>
-#include <string>
 #include <cmath>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
 #include <boost/math/distributions/normal.hpp>
 
 // implement Bachelier's Model to value a european call and a put option
@@ -59,24 +61,3 @@ private:
     double sigma_;
     std::string type_;
 };
-
-int main()
-{
-    // BSM inputs
-    double s = 10.5;
-    double k = 5.5;
-    double t = 2.0;
-    double r = 0.045;
-    double q = 0.0;
-    double sigma = 0.6;
-    std::string type = "call";
-
-    // Convert to Bachelier-compatible inputs
-    double f = s * std::exp((r - q) * t); // Forward price
-    double df = std::exp(-r * t);         // Discount factor
-    double sigma_bachelier = sigma * s;   // Approx absolute vol
-    // Create Bachelier instance
-    Bachelier bachelier(f, k, t, df, sigma_bachelier, type);
-
-    std::cout << "Bachelier " << type << " option price is $" << bachelier.calculate() << "\n";
-}

@@ -135,26 +135,3 @@ private:
     double sigma_;
     std::string type_;
 };
-
-int main()
-{
-
-    // BSM model inputs
-    double s = 10.5;
-    double k = 5.5;
-    double t = 2.0;
-    double r = 0.045;
-    double q = 0.0;
-    double sigma = 0.6;
-    std::string type = "call";
-
-    // Create an instance of the BlackScholes class
-    BlackScholes bs(s, k, t, r, q, sigma, type);
-
-    std::cout << type << " option price is $" << bs.calculate() << "\n";
-    std::cout << "delta: " << bs.delta() << "\n";
-    std::cout << "gamma: " << bs.gamma() << "\n";
-    std::cout << "vega: " << bs.vega() << "\n";
-    std::cout << "theta: " << bs.theta() << "\n";
-    std::cout << "rho: " << bs.rho() << "\n";
-}
